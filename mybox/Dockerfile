@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk11 AS builder
+FROM adoptopenjdk/openjdk17 AS builder
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
