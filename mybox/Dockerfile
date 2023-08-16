@@ -1,4 +1,4 @@
-FROM openjdk:17-ea-33-jdk-buster
+FROM openjdk:17-ea-33-jdk-buster AS builder
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
