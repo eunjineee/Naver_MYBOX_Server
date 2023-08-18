@@ -1,4 +1,4 @@
-package back.server.mybox.user;
+package back.server.mybox.entity;
 
 
 import lombok.*;

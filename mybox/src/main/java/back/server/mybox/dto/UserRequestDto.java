@@ -1,4 +1,4 @@
-package back.server.mybox.user;
+package back.server.mybox.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
