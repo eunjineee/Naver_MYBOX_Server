@@ -1,7 +1,9 @@
 package back.server.mybox.user;
 
-import jakarta.persistence.*;
+
 import lombok.*;
+
+import javax.persistence.*;
 
 @Entity
 @Getter
