@@ -17,6 +17,7 @@ public class User{
     private Long userId; //pk
     @Column(length = 32, nullable = false)
     private String username; //아이디
+    @Column(nullable = false)
     private String password;
     private String nickname;
 
