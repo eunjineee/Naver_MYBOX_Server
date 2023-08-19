@@ -38,7 +38,8 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) //세션을 사용하지 않겠다!(login시 세션을 검증하는 필터를 사용하지 않겠다)
                 .and()
                 .formLogin().disable() //formLogin(form)방식 사용 안함 , json방식으로 전달
-                .httpBasic().disable() //Bearer 방식 사용 -> header 에 authentication 에 토큰을 넣어 전달하는 방식
+                .httpBasic() //.disable() //Bearer 방식 사용 -> header 에 authentication 에 토큰을 넣어 전달하는 방식
+                .and()
                 .addFilter(config.corsFilter())
 //                .apply(new MyCustomDsl())
 //                .and()
