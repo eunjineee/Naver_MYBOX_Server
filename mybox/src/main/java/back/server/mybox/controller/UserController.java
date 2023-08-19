@@ -31,8 +31,8 @@ public class UserController {
     @GetMapping("/myinfo/{userId}")
     public ResponseEntity<Map<String, Object>> userMyInfo(@PathVariable(value = "userId") Long userId){
         Map<String, Object> response = new HashMap<>();
-        userService.userInfo(userId);
-
+        UserResponseDto responseDto = userService.userInfo(userId);
+        response.put("data", responseDto);
         response.put("message", "success");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
