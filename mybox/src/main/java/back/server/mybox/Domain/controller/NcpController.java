@@ -19,10 +19,10 @@ public class NcpController {
     private final NcpService ncpService;
 
     // 폴더 생성
-    @PostMapping("/folder/{foldername}")
-    public ResponseEntity<Map<String, Object>> createFolder(@PathVariable(value = "foldername")String foldername){
+    @PostMapping("/folder/{foldername}/{parentfolder}")
+    public ResponseEntity<Map<String, Object>> createFolder(@PathVariable(value = "foldername")String foldername,@PathVariable(value = "parentfolder")Long parentfolder){
         Map<String, Object> response = new HashMap<>();
-        String responseDto = ncpService.createFolder(foldername);
+        Long responseDto = ncpService.createFolder(foldername, parentfolder);
         response.put("data", responseDto);
         response.put("message", "success");
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -48,10 +48,10 @@ public class NcpController {
 //    }
 
     // 파일 업로드
-    @PostMapping("/file")
-    public ResponseEntity<Map<String, Object>> uploadFile(@RequestParam(value = "file") MultipartFile multipartFile) throws IOException{
+    @PostMapping("/file/{folderId}")
+    public ResponseEntity<Map<String, Object>> uploadFile(@RequestParam(value = "file") MultipartFile multipartFile, @PathVariable(value = "folderId") Long folderId) throws IOException{
         Map<String, Object> response = new HashMap<>();
-        String responseDto = ncpService.uploadFile(multipartFile);
+        String responseDto = ncpService.uploadFile(multipartFile, folderId);
         response.put("data", responseDto);
         response.put("message", "success");
         return new ResponseEntity<>(response, HttpStatus.OK);

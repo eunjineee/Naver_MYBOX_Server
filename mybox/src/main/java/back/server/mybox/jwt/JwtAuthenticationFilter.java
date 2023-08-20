@@ -1,9 +1,9 @@
 package back.server.mybox.jwt;
 
+import back.server.mybox.Domain.entity.UserEntity;
 import back.server.mybox.jwt.dto.TokenRequestDto;
 import back.server.mybox.jwt.service.JwtService;
 import back.server.mybox.common.PrincipalDetails;
-import back.server.mybox.Domain.entity.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -41,16 +41,16 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         //username, password 받기 request body에 존재 - json으로 파싱
         ObjectMapper om = new ObjectMapper();
-        User user = null;
+        UserEntity userEntity = null;
         try {
-            user = om.readValue(request.getInputStream(), User.class);
-            System.out.println("user찾았당!!!!  : "+user);
+            userEntity = om.readValue(request.getInputStream(), UserEntity.class);
+            System.out.println("user찾았당!!!!  : "+ userEntity);
         } catch (IOException e) {
-            System.out.println("user 못받음");
+            System.out.println("userEntity 못받음");
             e.printStackTrace();
         }
 
-        System.out.println("JwtAuthenticationFilter :" + user);
+        System.out.println("JwtAuthenticationFilter :" + userEntity);
 
         // authenticate() 함수가 호출 되면 인증 프로바이더가 유저 디테일 서비스의 -> authenticationManager 를 사용할때 UserDetailSevice 를 사용가능
         // loadUserByUsername(토큰의 첫번째 파라메터) 를 호출하고
@@ -63,12 +63,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         // 결론은 인증 프로바이더에게 알려줄 필요가 없음.
         System.out.println("여긴가?");
         UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
+                new UsernamePasswordAuthenticationToken(userEntity.getUsername(), userEntity.getPassword());
 
         Authentication authentication = authenticationManager.authenticate(authenticationToken);
         System.out.println("아님여기?");
         PrincipalDetails principal = (PrincipalDetails) authentication.getPrincipal();
-        System.out.println("JwtAuthenticationFilter: " + principal.getUser());
+        System.out.println("JwtAuthenticationFilter: " + principal.getUserEntity());
 
         return authentication;
     }
@@ -83,11 +83,11 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
 
         //token 생성
-        TokenRequestDto tokenRequestDto = jwtService.joinJwtToken(principalDetails.getUser().getUsername());
+        TokenRequestDto tokenRequestDto = jwtService.joinJwtToken(principalDetails.getUserEntity().getUsername());
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        Map<String, Object> jsonResponse = jwtService.successLoginResponse(tokenRequestDto, principalDetails.getUser().getUserId());
+        Map<String, Object> jsonResponse = jwtService.successLoginResponse(tokenRequestDto, principalDetails.getUserEntity().getUserId());
         String result = objectMapper.writeValueAsString(jsonResponse);
 //        response.setStatus(HttpStatus.OK.value());
 

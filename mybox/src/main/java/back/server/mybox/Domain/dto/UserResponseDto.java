@@ -1,6 +1,6 @@
 package back.server.mybox.Domain.dto;
 
-import back.server.mybox.Domain.entity.User;
+import back.server.mybox.Domain.entity.UserEntity;
 import lombok.*;
 
 @AllArgsConstructor
@@ -10,9 +10,11 @@ import lombok.*;
 public class UserResponseDto {
     private String username;
     private String nickname;
+    private Long privateFolder;
 
-    public UserResponseDto(User e){
+    public UserResponseDto(UserEntity e){
         this.username = e.getUsername();
         this.nickname = e.getNickname();
+        this.privateFolder = e.getPrivateFolder();
     }
 }

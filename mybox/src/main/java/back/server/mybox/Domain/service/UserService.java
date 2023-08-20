@@ -1,8 +1,8 @@
 package back.server.mybox.Domain.service;
 
+import back.server.mybox.Domain.entity.UserEntity;
 import back.server.mybox.jwt.entity.RefreshToken;
 import back.server.mybox.jwt.repository.RefreshTokenRepository;
-import back.server.mybox.Domain.entity.User;
 import back.server.mybox.Domain.repository.UserRepository;
 import back.server.mybox.Domain.dto.UserRequestDto;
 import back.server.mybox.Domain.dto.UserResponseDto;
@@ -22,28 +22,27 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public UserResponseDto join(UserRequestDto requestDto) {
-        User user = User.builder()
+        UserEntity userEntity = UserEntity.builder()
                 .username(requestDto.getUsername())
                 .password(bCryptPasswordEncoder.encode(requestDto.getPassword()))
                 .nickname(requestDto.getNickname())
                 .build();
-        userRepository.save(user);
-        String foldername = user.getUserId().toString() + "_" + user.getUsername();
-        user.SetPrivateFolder(ncpService.createPrivateFolder(user.getUserId(), foldername));
-        UserResponseDto responseDto = new UserResponseDto(user);
+        userRepository.save(userEntity);
+        userEntity.SetPrivateFolder(ncpService.createPrivateFolder(userEntity.getUserId(), userEntity.getUsername()));
+        UserResponseDto responseDto = new UserResponseDto(userEntity);
         return responseDto;
     }
 
     public UserResponseDto userInfo(Long userId) {
-        User entity = userRepository.findAllByUserId(userId);
+        UserEntity entity = userRepository.findAllByUserId(userId);
         UserResponseDto responseDto = new UserResponseDto(entity);
         return responseDto;
     }
 
     public void userLogout(Long userId){
-        User user = userRepository.findByUserId(userId);
-        RefreshToken token = refreshTokenRepository.findRefreshTokenById(user.getJwtRefreshToken().getId());
+        UserEntity userEntity = userRepository.findByUserId(userId);
+        RefreshToken token = refreshTokenRepository.findRefreshTokenById(userEntity.getJwtRefreshToken().getId());
         refreshTokenRepository.delete(token);
-        user.logout();
+        userEntity.logout();
     }
 }

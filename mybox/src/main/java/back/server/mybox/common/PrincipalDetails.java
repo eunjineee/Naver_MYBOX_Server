@@ -1,7 +1,7 @@
 package back.server.mybox.common;
 
 
-import back.server.mybox.Domain.entity.User;
+import back.server.mybox.Domain.entity.UserEntity;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,10 +12,10 @@ import java.util.Collection;
 @Data
 public class PrincipalDetails implements UserDetails {
 
-    private User user;
+    private UserEntity userEntity;
 
-    public PrincipalDetails(User user) {
-        this.user = user;
+    public PrincipalDetails(UserEntity userEntity) {
+        this.userEntity = userEntity;
     }
 
     @Override
@@ -27,12 +27,12 @@ public class PrincipalDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return user.getPassword();
+        return userEntity.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return user.getUsername();
+        return userEntity.getUsername();
     }
 
     @Override
