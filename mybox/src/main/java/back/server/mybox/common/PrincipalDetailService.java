@@ -1,7 +1,7 @@
 package back.server.mybox.common;
 
 
-import back.server.mybox.Domain.entity.User;
+import back.server.mybox.Domain.entity.UserEntity;
 import back.server.mybox.Domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,9 +21,9 @@ public class PrincipalDetailService implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         System.out.println("PrincipalDetailService loadUserByUsername 실행중   " + username);
-        User findUser = userRepository.findByUsername(username);
-        System.out.println("PrincipalDetailService loadUserByUsername에서 찾은 USER : " + findUser);
+        UserEntity findUserEntity = userRepository.findByUsername(username);
+        System.out.println("PrincipalDetailService loadUserByUsername에서 찾은 USER : " + findUserEntity);
 
-        return new PrincipalDetails(findUser);
+        return new PrincipalDetails(findUserEntity);
     }
 }
