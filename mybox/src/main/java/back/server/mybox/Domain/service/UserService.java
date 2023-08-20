@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final NcpService ncpService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
@@ -27,6 +28,8 @@ public class UserService {
                 .nickname(requestDto.getNickname())
                 .build();
         userRepository.save(user);
+        String foldername = user.getUserId().toString() + "_" + user.getUsername();
+        user.SetPrivateFolder(ncpService.createPrivateFolder(user.getUserId(), foldername));
         UserResponseDto responseDto = new UserResponseDto(user);
         return responseDto;
     }
