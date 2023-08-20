@@ -1,5 +1,12 @@
 package back.server.mybox.Domain.service;
 
+import back.server.mybox.Domain.entity.FolderEntity;
+import back.server.mybox.Domain.entity.UserEntity;
+import back.server.mybox.Domain.entity.FileEntity;
+import back.server.mybox.Domain.repository.FileRepository;
+import back.server.mybox.Domain.repository.FolderRepository;
+import back.server.mybox.Domain.repository.UserRepository;
+import back.server.mybox.common.SecurityUtils;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
@@ -9,6 +16,7 @@ import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.net.URLEncoder;
+import java.util.Optional;
 
 
 @Service
@@ -39,88 +48,73 @@ public class NcpService {
     @Value("${cloud.aws.credentials.bucket}")
     private String bucketName;
 
-
-
-    public String createFolder(String folderName) {
-        final AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
+    private final UserRepository userRepository;
+    private final FolderRepository folderRepository;
+    private final FileRepository fileRepository;
+    private AmazonS3 s3builder(){
+        AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endPoint, regionName))
                 .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
                 .build();
-        amazonS3.putObject(bucketName, folderName + "/", new ByteArrayInputStream(new byte[0]), new ObjectMetadata());
-        return folderName;
+        return amazonS3;
     }
+
+    public Long createPrivateFolder(Long userId, String userName) {
+        String ncpfoldername = userId.toString() + "_" + userName;
+        s3builder().putObject(bucketName, ncpfoldername + "/", new ByteArrayInputStream(new byte[0]), new ObjectMetadata());
+
+        UserEntity userEntity = userRepository.findByUserId(userId);
+
+        FolderEntity folderEntity = FolderEntity.builder()
+                .foldername(ncpfoldername)
+                .userEntity(userEntity)
+                .createdAt(LocalDateTime.now())
+                .build();
+        folderRepository.save(folderEntity);
+
+        return folderEntity.getFolderId();
+    }
+
+    public Long createFolder(String folderName, Long parentFolder) {
+        UserEntity userEntity = userRepository.findByUsername(SecurityUtils.getCurrentUserId());
+
+        //parentFolder null로 받는 법 추가하기
+        if (null == parentFolder){
+            parentFolder = userEntity.getUserId();
+        }
+
+        String ncpfoldername = userEntity.getUserId().toString() + "_" + folderName;
+        s3builder().putObject(bucketName, ncpfoldername + "/", new ByteArrayInputStream(new byte[0]), new ObjectMetadata());
+
+        FolderEntity folderEntity = FolderEntity.builder()
+                .foldername(folderName)
+                .createdAt(LocalDateTime.now())
+                .userEntity(userEntity)
+                .parentFolder(parentFolder)
+                .build();
+        folderRepository.save(folderEntity);
+
+        return folderEntity.getFolderId();
+    }
+
     public void deleteFolder(String folderName) {
-        final AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endPoint, regionName))
-                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
-                .build();
+        UserEntity userEntity = userRepository.findByUsername(SecurityUtils.getCurrentUserId());
+
         String replaceFolderName = (folderName + "/").replace(File.separatorChar, '/');
-        amazonS3.deleteObject(bucketName, replaceFolderName);
+        String ncpfoldername = userEntity.getUserId().toString() + "_" + replaceFolderName;
+        s3builder().deleteObject(bucketName, ncpfoldername);
+
+        FolderEntity folder = folderRepository.findByFoldername(folderName);
+        folderRepository.delete(folder);
     }
-//    public void folderList(){
-        //db에서 조회해도 괜찮지 않을까?
 
-//        // S3 client
-//        final AmazonS3 s3 = AmazonS3ClientBuilder.standard()
-//                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endPoint, regionName))
-//                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
-//                .build();
-//
-//        // list all in the bucket
-//        try {
-//            ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
-//                    .withBucketName(bucketName)
-//                    .withMaxKeys(300);
-//
-//            ObjectListing objectListing = s3.listObjects(listObjectsRequest);
-//
-//            System.out.println("Object List:");
-//            while (true) {
-//                for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
-//                    System.out.println("    name=" + objectSummary.getKey() + ", size=" + objectSummary.getSize() + ", owner=" + objectSummary.getOwner().getId());
-//                }
-//
-//                if (objectListing.isTruncated()) {
-//                    objectListing = s3.listNextBatchOfObjects(objectListing);
-//                } else {
-//                    break;
-//                }
-//            }
-//        } catch (AmazonS3Exception e) {
-//            System.err.println(e.getErrorMessage());
-//            System.exit(1);
-//        }
-//
-//        // top level folders and files in the bucket
-//        try {
-//            ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
-//                    .withBucketName(bucketName)
-//                    .withDelimiter("/")
-//                    .withMaxKeys(300);
-//
-//            ObjectListing objectListing = s3.listObjects(listObjectsRequest);
-//
-//            System.out.println("Folder List:");
-//            for (String commonPrefixes : objectListing.getCommonPrefixes()) {
-//                System.out.println("    name=" + commonPrefixes);
-//            }
-//
-//            System.out.println("File List:");
-//            for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
-//                System.out.println("    name=" + objectSummary.getKey() + ", size=" + objectSummary.getSize() + ", owner=" + objectSummary.getOwner().getId());
-//            }
-//        } catch (AmazonS3Exception e) {
-//            e.printStackTrace();
-//        } catch(SdkClientException e) {
-//            e.printStackTrace();
-//        }
-//    }
+    public String uploadFile(MultipartFile multipartFile, Long folderId) throws IOException {
+        UserEntity userEntity = userRepository.findByUsername(SecurityUtils.getCurrentUserId());
 
-    public String uploadFile(MultipartFile multipartFile) throws IOException {
-        final AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endPoint, regionName))
-                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
-                .build();
+        //방법 추가하기
+        if (folderId.equals(null)){
+            folderId = userEntity.getPrivateFolder();
+        }
 
         String originalFilename = multipartFile.getOriginalFilename();
 
@@ -128,37 +122,53 @@ public class NcpService {
         metadata.setContentLength(multipartFile.getSize());
         metadata.setContentType(multipartFile.getContentType());
 
-        amazonS3.putObject(bucketName, originalFilename, multipartFile.getInputStream(), metadata);
-        return amazonS3.getUrl(bucketName, originalFilename).toString();
+        FolderEntity folder = folderRepository.findByFolderId(folderId);
+        String ncpfoldername = (folder.getFoldername() + "/").replace(File.separatorChar, '/');
+        String ncpfilename = userEntity.getUserId().toString() + "_" + originalFilename;
+
+        s3builder().putObject(bucketName, ncpfoldername + ncpfilename, multipartFile.getInputStream(), metadata);
+
+
+        FileEntity fileEntity = FileEntity.builder()
+                .filename(originalFilename)
+                .folder(folder)
+                .build();
+        fileRepository.save(fileEntity);
+
+        return s3builder().getUrl(bucketName, ncpfilename).toString();
     }
 
     public void deleteFile(String fileName) {
-        final AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endPoint, regionName))
-                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
-                .build();
+        UserEntity userEntity = userRepository.findByUsername(SecurityUtils.getCurrentUserId());
+
         String replaceFileName = (fileName).replace(File.separatorChar, '/');
-        amazonS3.deleteObject(bucketName, replaceFileName);
+        String ncpfilename = userEntity.getUserId().toString() + "_" + replaceFileName;
+
+        FileEntity file = fileRepository.findByFilename(fileName);
+
+        String ncpfoldername = (file.getFolder().getFoldername() + "/").replace(File.separatorChar, '/');
+
+        s3builder().deleteObject(bucketName, ncpfoldername + ncpfilename);
+
+        fileRepository.delete(file);
     }
 
-    public ResponseEntity<byte[]> downloadFile(String fileUrl) throws IOException {
-        final AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endPoint, regionName))
-                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
-                .build();
+    public ResponseEntity<byte[]> downloadFile(String filename) throws IOException {
+        UserEntity userEntity = userRepository.findByUsername(SecurityUtils.getCurrentUserId());
 
-        S3Object s30bject = amazonS3.getObject(new GetObjectRequest(bucketName, fileUrl));
+        String ncpfilename = userEntity.getUserId().toString() + "_" + filename;
+        S3Object s30bject = s3builder().getObject(new GetObjectRequest(bucketName, ncpfilename));
         S3ObjectInputStream objectInputStream = s30bject.getObjectContent();
         byte[] bytes = IOUtils.toByteArray(objectInputStream);
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(contentType(fileUrl));
+        httpHeaders.setContentType(contentType(ncpfilename));
         httpHeaders.setContentLength(bytes.length);
 
-        String[] arr = fileUrl.split("/");
+        String[] arr = ncpfilename.split("/");
         String type = arr[arr.length - 1];
         String fileName = URLEncoder.encode(type, "UTF-8").replaceAll("\\+", "%20");
-        httpHeaders.setContentDispositionFormData("attachment", fileName);
+        httpHeaders.setContentDispositionFormData("attachment", ncpfilename);
         return new ResponseEntity<>(bytes, httpHeaders, HttpStatus.OK);
     }
 
@@ -217,5 +227,64 @@ public class NcpService {
 //            e.printStackTrace();
 //        }
 //        return null;
+//    }
+
+//    public void folderList(){
+    //db에서 조회해도 괜찮지 않을까?
+
+//        // S3 client
+//        final AmazonS3 s3 = AmazonS3ClientBuilder.standard()
+//                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endPoint, regionName))
+//                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
+//                .build();
+//
+//        // list all in the bucket
+//        try {
+//            ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
+//                    .withBucketName(bucketName)
+//                    .withMaxKeys(300);
+//
+//            ObjectListing objectListing = s3.listObjects(listObjectsRequest);
+//
+//            System.out.println("Object List:");
+//            while (true) {
+//                for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
+//                    System.out.println("    name=" + objectSummary.getKey() + ", size=" + objectSummary.getSize() + ", owner=" + objectSummary.getOwner().getId());
+//                }
+//
+//                if (objectListing.isTruncated()) {
+//                    objectListing = s3.listNextBatchOfObjects(objectListing);
+//                } else {
+//                    break;
+//                }
+//            }
+//        } catch (AmazonS3Exception e) {
+//            System.err.println(e.getErrorMessage());
+//            System.exit(1);
+//        }
+//
+//        // top level folders and files in the bucket
+//        try {
+//            ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
+//                    .withBucketName(bucketName)
+//                    .withDelimiter("/")
+//                    .withMaxKeys(300);
+//
+//            ObjectListing objectListing = s3.listObjects(listObjectsRequest);
+//
+//            System.out.println("FolderEntity List:");
+//            for (String commonPrefixes : objectListing.getCommonPrefixes()) {
+//                System.out.println("    name=" + commonPrefixes);
+//            }
+//
+//            System.out.println("FileEntity List:");
+//            for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
+//                System.out.println("    name=" + objectSummary.getKey() + ", size=" + objectSummary.getSize() + ", owner=" + objectSummary.getOwner().getId());
+//            }
+//        } catch (AmazonS3Exception e) {
+//            e.printStackTrace();
+//        } catch(SdkClientException e) {
+//            e.printStackTrace();
+//        }
 //    }
 }
