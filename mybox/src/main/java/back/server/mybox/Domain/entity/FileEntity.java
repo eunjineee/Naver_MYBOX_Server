@@ -1,7 +1,7 @@
 package back.server.mybox.Domain.entity;
 
 import lombok.*;
-import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 
 import javax.persistence.*;
 
@@ -10,15 +10,16 @@ import javax.persistence.*;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class Folder {
+public class FileEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "folder_id")
-    private Long folderId;
-    private String foldername;
-    private DateTime createAt;
+    @Column(name = "file_id")
+    private Long fileId;
+    private String filename;
+    private LocalDateTime createdAt;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "folder_id")
+    private FolderEntity folder;
 }

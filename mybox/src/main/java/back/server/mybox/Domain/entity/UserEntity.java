@@ -11,7 +11,7 @@ import javax.persistence.*;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class User{
+public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -21,6 +21,7 @@ public class User{
     @Column(nullable = false)
     private String password;
     private String nickname;
+    private Long privateFolder;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "refreshTokenId")
@@ -31,6 +32,9 @@ public class User{
     }
     public void SetRefreshToken(String refreshToken) {
         this.jwtRefreshToken.setRefreshToken(refreshToken);
+    }
+    public void SetPrivateFolder(Long folderId) {
+        this.privateFolder = folderId;
     }
     public void logout(){
         this.jwtRefreshToken = null;
