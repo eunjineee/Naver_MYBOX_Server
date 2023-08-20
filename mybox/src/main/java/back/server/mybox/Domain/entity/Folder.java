@@ -1,4 +1,4 @@
-package back.server.mybox.entity;
+package back.server.mybox.Domain.entity;
 
 import lombok.*;
 import org.joda.time.DateTime;
