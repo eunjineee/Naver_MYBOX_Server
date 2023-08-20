@@ -1,9 +1,11 @@
-package back.server.mybox.service;
+package back.server.mybox.Domain.service;
 
-import back.server.mybox.entity.User;
-import back.server.mybox.repository.UserReposiroty;
-import back.server.mybox.dto.UserRequestDto;
-import back.server.mybox.dto.UserResponseDto;
+import back.server.mybox.jwt.entity.RefreshToken;
+import back.server.mybox.jwt.repository.RefreshTokenRepository;
+import back.server.mybox.Domain.entity.User;
+import back.server.mybox.Domain.repository.UserRepository;
+import back.server.mybox.Domain.dto.UserRequestDto;
+import back.server.mybox.Domain.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final UserReposiroty userRepository;
+    private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public UserResponseDto join(UserRequestDto requestDto) {
@@ -28,10 +31,16 @@ public class UserService {
         return responseDto;
     }
 
-
     public UserResponseDto userInfo(Long userId) {
         User entity = userRepository.findAllByUserId(userId);
         UserResponseDto responseDto = new UserResponseDto(entity);
         return responseDto;
+    }
+
+    public void userLogout(Long userId){
+        User user = userRepository.findByUserId(userId);
+        RefreshToken token = refreshTokenRepository.findRefreshTokenById(user.getJwtRefreshToken().getId());
+        refreshTokenRepository.delete(token);
+        user.logout();
     }
 }

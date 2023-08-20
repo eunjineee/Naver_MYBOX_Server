@@ -1,6 +1,6 @@
-package back.server.mybox.controller;
+package back.server.mybox.Domain.controller;
 
-import back.server.mybox.service.NcpService;
+import back.server.mybox.Domain.service.NcpService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,24 +17,6 @@ import java.util.Map;
 @RestController
 public class NcpController {
     private final NcpService ncpService;
-
-//    @PutMapping("/create/{bucketName}")
-//    public ResponseEntity<Map<String, Object>> upload(@PathVariable(value = "bucketName")String bucketName) throws IOException {
-//        Map<String, Object> response = new HashMap<>();
-//        ncpService.createBucket(bucketName);
-//        response.put("data", "responseDto");
-//        response.put("message", "success");
-//        return new ResponseEntity<>(response, HttpStatus.OK);
-//    }
-//
-//    @GetMapping("/bucket/list")
-//    public ResponseEntity<Map<String, Object>> bucketsList(){
-//        Map<String, Object> response = new HashMap<>();
-//        ncpService.getBucketList();
-//        response.put("data", "responseDto");
-//        response.put("message", "success");
-//        return new ResponseEntity<>(response, HttpStatus.OK);
-//    }
 
     // 폴더 생성
     @PostMapping("/folder/{foldername}")
@@ -89,4 +71,22 @@ public class NcpController {
     public ResponseEntity<byte[]> downloadFile(@PathVariable(value = "filename")String filename) throws IOException{
         return ncpService.downloadFile(filename);
     }
+
+//    @PutMapping("/create/{bucketName}")
+//    public ResponseEntity<Map<String, Object>> upload(@PathVariable(value = "bucketName")String bucketName) throws IOException {
+//        Map<String, Object> response = new HashMap<>();
+//        ncpService.createBucket(bucketName);
+//        response.put("data", "responseDto");
+//        response.put("message", "success");
+//        return new ResponseEntity<>(response, HttpStatus.OK);
+//    }
+//
+//    @GetMapping("/bucket/list")
+//    public ResponseEntity<Map<String, Object>> bucketsList(){
+//        Map<String, Object> response = new HashMap<>();
+//        ncpService.getBucketList();
+//        response.put("data", "responseDto");
+//        response.put("message", "success");
+//        return new ResponseEntity<>(response, HttpStatus.OK);
+//    }
 }

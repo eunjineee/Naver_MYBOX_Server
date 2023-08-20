@@ -1,6 +1,6 @@
-package back.server.mybox.dto;
+package back.server.mybox.Domain.dto;
 
-import back.server.mybox.entity.User;
+import back.server.mybox.Domain.entity.User;
 import lombok.*;
 
 @AllArgsConstructor
