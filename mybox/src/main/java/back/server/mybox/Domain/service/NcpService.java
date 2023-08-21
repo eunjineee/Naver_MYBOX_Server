@@ -59,6 +59,12 @@ public class NcpService {
         return amazonS3;
     }
 
+    private String ncpname(String Fname){
+        UserEntity userEntity = userRepository.findByUsername(SecurityUtils.getCurrentUserId());
+        String ncpname = userEntity.getUserId().toString() + "_" + Fname;
+        return ncpname;
+    }
+
     public Long createPrivateFolder(Long userId, String userName) {
         String ncpfoldername = userId.toString() + "_" + userName;
         s3builder().putObject(bucketName, ncpfoldername + "/", new ByteArrayInputStream(new byte[0]), new ObjectMetadata());
@@ -66,7 +72,7 @@ public class NcpService {
         UserEntity userEntity = userRepository.findByUserId(userId);
 
         FolderEntity folderEntity = FolderEntity.builder()
-                .foldername(ncpfoldername)
+                .foldername(userName)
                 .userEntity(userEntity)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -77,14 +83,10 @@ public class NcpService {
 
     public Long createFolder(String folderName, Long parentFolder) {
         UserEntity userEntity = userRepository.findByUsername(SecurityUtils.getCurrentUserId());
-
-        //parentFolder null로 받는 법 추가하기
-        if (null == parentFolder){
-            parentFolder = userEntity.getUserId();
-        }
-
-        String ncpfoldername = userEntity.getUserId().toString() + "_" + folderName;
-        s3builder().putObject(bucketName, ncpfoldername + "/", new ByteArrayInputStream(new byte[0]), new ObjectMetadata());
+        String parentFoldername = folderRepository.findByFolderId(parentFolder).getFoldername();
+        String parentncpname = ncpname(parentFoldername);
+        String ncpfoldername = ncpname(folderName);
+        s3builder().putObject(bucketName, parentncpname + "/" + ncpfoldername + "/", new ByteArrayInputStream(new byte[0]), new ObjectMetadata());
 
         FolderEntity folderEntity = FolderEntity.builder()
                 .foldername(folderName)
@@ -98,13 +100,13 @@ public class NcpService {
     }
 
     public void deleteFolder(String folderName) {
-        UserEntity userEntity = userRepository.findByUsername(SecurityUtils.getCurrentUserId());
+        FolderEntity folder = folderRepository.findByFoldername(folderName);
 
         String replaceFolderName = (folderName + "/").replace(File.separatorChar, '/');
-        String ncpfoldername = userEntity.getUserId().toString() + "_" + replaceFolderName;
+        String ncpfoldername =  ncpname(folderRepository.findByFolderId(folder.getParentFolder()).getFoldername())+"/"+ ncpname(replaceFolderName);
+
         s3builder().deleteObject(bucketName, ncpfoldername);
 
-        FolderEntity folder = folderRepository.findByFoldername(folderName);
         folderRepository.delete(folder);
     }
 
@@ -124,7 +126,7 @@ public class NcpService {
 
         FolderEntity folder = folderRepository.findByFolderId(folderId);
         String ncpfoldername = (folder.getFoldername() + "/").replace(File.separatorChar, '/');
-        String ncpfilename = userEntity.getUserId().toString() + "_" + originalFilename;
+        String ncpfilename = ncpname(originalFilename);
 
         s3builder().putObject(bucketName, ncpfoldername + ncpfilename, multipartFile.getInputStream(), metadata);
 
@@ -139,24 +141,21 @@ public class NcpService {
     }
 
     public void deleteFile(String fileName) {
-        UserEntity userEntity = userRepository.findByUsername(SecurityUtils.getCurrentUserId());
-
         String replaceFileName = (fileName).replace(File.separatorChar, '/');
-        String ncpfilename = userEntity.getUserId().toString() + "_" + replaceFileName;
+        String ncpfilename = ncpname(replaceFileName);
 
         FileEntity file = fileRepository.findByFilename(fileName);
 
         String ncpfoldername = (file.getFolder().getFoldername() + "/").replace(File.separatorChar, '/');
 
         s3builder().deleteObject(bucketName, ncpfoldername + ncpfilename);
-
         fileRepository.delete(file);
     }
 
     public ResponseEntity<byte[]> downloadFile(String filename) throws IOException {
-        UserEntity userEntity = userRepository.findByUsername(SecurityUtils.getCurrentUserId());
+        //file 레포에서 파일 찾아서 부모 루트 달아주기
+        String ncpfilename = ncpname(filename);
 
-        String ncpfilename = userEntity.getUserId().toString() + "_" + filename;
         S3Object s30bject = s3builder().getObject(new GetObjectRequest(bucketName, ncpfilename));
         S3ObjectInputStream objectInputStream = s30bject.getObjectContent();
         byte[] bytes = IOUtils.toByteArray(objectInputStream);
