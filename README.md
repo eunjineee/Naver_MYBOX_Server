@@ -4,12 +4,6 @@ Numble에서 진행한 개인 프로젝트 " 네이버 마이박스 서버 만�
 
 개인 노션 주소 : [![Notion](https://img.shields.io/badge/NotionUrl-000000?style=flat-square&link=https://wo-ol.tistory.com/)](https://prickly-melon-45e.notion.site/MYBOX-d38a70c26e6e49f8a23a0daea86760c7?pvs=4)
 
-
-
-----
-
-[TOC]
-
 ---
 
 
