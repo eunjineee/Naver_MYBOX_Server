@@ -12,6 +12,7 @@ public class MyboxApplication {
 		return new BCryptPasswordEncoder();
 	}
 	public static void main(String[] args) {
+		System.out.println("빌드 시작");
 		SpringApplication.run(MyboxApplication.class, args);
 	}
 
